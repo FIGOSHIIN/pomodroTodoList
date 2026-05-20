@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>✨ Ma Bulle Productive</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --rose:       #f472b6;
+      --rose-light: #fce7f3;
+      --rose-deep:  #db2777;
+      --lavender:   #c084fc;
+      --peach:      #fdba74;
+      --mint:       #6ee7b7;
+      --cream:      #fff7f0;
+      --text:       #4a2040;
+      --text-soft:  #9d6b8a;
+      --card:       rgba(255,255,255,0.72);
+      --shadow:     0 8px 40px rgba(244,114,182,0.18);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: 'Quicksand', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* ---- Animated background ---- */
+    .bg {
+      position: fixed; inset: 0; z-index: 0;
+      background: linear-gradient(135deg, #fce7f3 0%, #f5d0fe 40%, #fde68a 100%);
+    }
+    .blob {
+      position: absolute; border-radius: 50%; filter: blur(70px); opacity: .45; animation: drift 12s ease-in-out infinite alternate;
+    }
+    .blob1 { width: 520px; height: 520px; background: #f9a8d4; top: -120px; left: -140px; animation-duration: 14s; }
+    .blob2 { width: 380px; height: 380px; background: #d8b4fe; bottom: -80px; right: -100px; animation-duration: 11s; animation-delay: -4s; }
+    .blob3 { width: 260px; height: 260px; background: #fcd34d; top: 40%; left: 60%; animation-duration: 9s; animation-delay: -2s; }
+
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.07); }
+    }
+
+    /* Floating petals */
+    .petal {
+      position: fixed; pointer-events: none; z-index: 1;
+      width: 14px; height: 14px;
+      border-radius: 50% 0 50% 0;
+      animation: fall linear infinite;
+      opacity: .7;
+    }
+    @keyframes fall {
+      0%   { transform: translateY(-30px) rotate(0deg); opacity: .8; }
+      100% { transform: translateY(110vh)  rotate(400deg); opacity: 0; }
+    }
+
+    /* ---- Layout ---- */
+    .container {
+      position: relative; z-index: 2;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px 60px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 42px;
+    }
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-style: italic;
+      background: linear-gradient(135deg, var(--rose-deep), var(--lavender));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.15;
+    }
+    header p {
+      margin-top: 8px;
+      color: var(--text-soft);
+      font-size: .95rem;
+      letter-spacing: .04em;
+    }
+
+    /* ---- Grid ---- */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+    }
+    @media (max-width: 660px) { .grid { grid-template-columns: 1fr; } }
+
+    /* ---- Card ---- */
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(14px);
+      border: 1.5px solid rgba(255,255,255,0.7);
+      border-radius: 28px;
+      padding: 32px 28px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      color: var(--rose-deep);
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ---- Timer ---- */
+    .timer-modes {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 8px 6px;
+      border: 2px solid transparent;
+      border-radius: 14px;
+      background: var(--rose-light);
+      color: var(--rose-deep);
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: all .25s;
+    }
+    .mode-btn.active {
+      background: linear-gradient(135deg, var(--rose), var(--lavender));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 18px rgba(244,114,182,.4);
+    }
+    .mode-btn:hover:not(.active) { border-color: var(--rose); }
+
+    /* Ring */
+    .ring-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 12px 0 28px;
+      position: relative;
+    }
+    .ring-svg { transform: rotate(-90deg); }
+    .ring-track { fill: none; stroke: #fce7f3; stroke-width: 10; }
+    .ring-progress {
+      fill: none;
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke: url(#grad);
+      transition: stroke-dashoffset .8s ease;
+    }
+    .ring-center {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+    .timer-display {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.8rem;
+      color: var(--text);
+      line-height: 1;
+    }
+    .timer-label {
+      font-size: .78rem;
+      color: var(--text-soft);
+      margin-top: 4px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .timer-controls {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+    }
+    .ctrl-btn {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-size: 1.4rem;
+      display: grid;
+      place-items: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .ctrl-btn:hover { transform: scale(1.1); }
+    .ctrl-btn.primary {
+      background: linear-gradient(135deg, var(--rose), var(--lavender));
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(244,114,182,.45);
+    }
+    .ctrl-btn.secondary {
+      background: var(--rose-light);
+      color: var(--rose-deep);
+    }
+
+    /* Session dots */
+    .sessions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #fce7f3;
+      transition: background .3s;
+    }
+    .dot.done { background: linear-gradient(135deg, var(--rose), var(--lavender)); }
+
+    /* ---- Todo ---- */
+    .todo-input-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .todo-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #fce7f3;
+      border-radius: 16px;
+      font-family: 'Quicksand', sans-serif;
+      font-size: .95rem;
+      color: var(--text);
+      background: rgba(255,255,255,.7);
+      outline: none;
+      transition: border-color .2s;
+    }
+    .todo-input:focus { border-color: var(--rose); }
+    .todo-input::placeholder { color: #d4a0bc; }
+
+    .add-btn {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, var(--rose), var(--lavender));
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 16px rgba(244,114,182,.4);
+      transition: transform .2s;
+      flex-shrink: 0;
+    }
+    .add-btn:hover { transform: scale(1.12) rotate(10deg); }
+
+    /* Filter pills */
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .filter-pill {
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1.5px solid #fce7f3;
+      background: transparent;
+      color: var(--text-soft);
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 600;
+      font-size: .8rem;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .filter-pill.active {
+      background: linear-gradient(135deg, var(--rose), var(--lavender));
+      color: #fff;
+      border-color: transparent;
+    }
+
+    /* Todo list */
+    .todo-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,.65);
+      border: 1.5px solid rgba(255,255,255,.8);
+      border-radius: 16px;
+      padding: 12px 14px;
+      animation: slideIn .3s ease;
+      transition: opacity .3s, transform .3s;
+    }
+    .todo-item.done-item { opacity: .55; }
+    .todo-item.done-item .todo-text { text-decoration: line-through; color: var(--text-soft); }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .check-box {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--rose);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      transition: all .2s;
+      background: transparent;
+    }
+    .check-box.checked {
+      background: linear-gradient(135deg, var(--rose), var(--lavender));
+      border-color: transparent;
+    }
+    .check-box.checked::after { content: '✓'; color: #fff; font-size: .75rem; font-weight: 700; }
+
+    .todo-text {
+      flex: 1;
+      font-size: .92rem;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .priority-badge {
+      font-size: .68rem;
+      padding: 3px 9px;
+      border-radius: 10px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    .p-high   { background: #fde2e2; color: #e05555; }
+    .p-medium { background: #fef3c7; color: #d97706; }
+    .p-low    { background: #d1fae5; color: #059669; }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #d4a0bc;
+      font-size: 1rem;
+      transition: color .2s, transform .2s;
+      padding: 2px;
+    }
+    .delete-btn:hover { color: var(--rose-deep); transform: scale(1.2); }
+
+    /* Stats bar */
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: .8rem;
+      color: var(--text-soft);
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1.5px solid #fce7f3;
+    }
+    .progress-bar-wrap {
+      height: 6px;
+      background: #fce7f3;
+      border-radius: 10px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--rose), var(--lavender));
+      border-radius: 10px;
+      transition: width .4s ease;
+    }
+
+    /* Priority selector */
+    .priority-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .prio-opt {
+      padding: 4px 12px;
+      border-radius: 12px;
+      border: 1.5px solid transparent;
+      font-family: 'Quicksand', sans-serif;
+      font-size: .78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .prio-opt[data-p="high"]   { background: #fde2e2; color: #e05555; }
+    .prio-opt[data-p="medium"] { background: #fef3c7; color: #d97706; }
+    .prio-opt[data-p="low"]    { background: #d1fae5; color: #059669; }
+    .prio-opt.selected { box-shadow: 0 0 0 2px currentColor; }
+
+    /* Motivational quote */
+    .quote-card {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, var(--rose), #c084fc, var(--peach));
+      border-radius: 24px;
+      padding: 26px 32px;
+      text-align: center;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .quote-card::before {
+      content: '❝';
+      position: absolute;
+      top: -10px; left: 20px;
+      font-size: 7rem;
+      opacity: .15;
+      line-height: 1;
+      font-family: serif;
+    }
+    .quote-text {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .quote-author {
+      font-size: .8rem;
+      opacity: .85;
+      letter-spacing: .06em;
+    }
+    .quote-refresh {
+      position: absolute;
+      top: 14px; right: 18px;
+      background: rgba(255,255,255,.25);
+      border: none;
+      color: #fff;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+      display: grid;
+      place-items: center;
+      transition: transform .4s;
+    }
+    .quote-refresh:hover { transform: rotate(180deg); }
+
+    /* Notification toast */
+    .toast {
+      position: fixed;
+      bottom: 30px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: linear-gradient(135deg, var(--rose), var(--lavender));
+      color: #fff;
+      padding: 14px 28px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: .95rem;
+      box-shadow: 0 8px 30px rgba(244,114,182,.5);
+      transition: transform .4s cubic-bezier(.34,1.56,.64,1);
+      z-index: 100;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #f9a8d4; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<!-- Background -->
+<div class="bg">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+</div>
+
+<!-- Petals injected by JS -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <header>
+    <h1>✨ Ma Bulle Productive ✨</h1>
+    <p>Focus, organise-toi et brille comme tu le mérites 🌸</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- ===== TIMER ===== -->
+    <div class="card">
+      <div class="card-title">🍅 Pomodoro Timer</div>
+
+      <div class="timer-modes">
+        <button class="mode-btn active" onclick="setMode('pomodoro')">Focus 25'</button>
+        <button class="mode-btn" onclick="setMode('short')">Pause 5'</button>
+        <button class="mode-btn" onclick="setMode('long')">Grande 15'</button>
+      </div>
+
+      <div class="ring-wrap">
+        <svg class="ring-svg" width="180" height="180" viewBox="0 0 180 180">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%"   stop-color="#f472b6"/>
+              <stop offset="100%" stop-color="#c084fc"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-track"    cx="90" cy="90" r="78"/>
+          <circle class="ring-progress" cx="90" cy="90" r="78" id="ringProgress"
+            stroke-dasharray="489.8" stroke-dashoffset="0"/>
+        </svg>
+        <div class="ring-center">
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="timer-label"  id="timerLabel">Focus 💪</div>
+        </div>
+      </div>
+
+      <div class="timer-controls">
+        <button class="ctrl-btn secondary" onclick="resetTimer()" title="Réinitialiser">↺</button>
+        <button class="ctrl-btn primary"   id="playBtn" onclick="toggleTimer()">▶</button>
+        <button class="ctrl-btn secondary" onclick="skipSession()" title="Passer">⏭</button>
+      </div>
+
+      <div class="sessions" id="sessions"></div>
+    </div>
+
+    <!-- ===== TODO ===== -->
+    <div class="card">
+      <div class="card-title">📋 Ma To-Do List</div>
+
+      <div class="priority-row">
+        <button class="prio-opt selected" data-p="high"   onclick="selectPrio(this)">🔴 Urgent</button>
+        <button class="prio-opt"          data-p="medium" onclick="selectPrio(this)">🟡 Normal</button>
+        <button class="prio-opt"          data-p="low"    onclick="selectPrio(this)">🟢 Doux</button>
+      </div>
+
+      <div class="todo-input-row">
+        <input class="todo-input" id="todoInput" type="text"
+          placeholder="Ajouter une tâche... ✍️"
+          onkeydown="if(event.key==='Enter') addTodo()"/>
+        <button class="add-btn" onclick="addTodo()">+</button>
+      </div>
+
+      <div class="filters">
+        <button class="filter-pill active" onclick="setFilter('all',  this)">Tout</button>
+        <button class="filter-pill"        onclick="setFilter('active', this)">En cours</button>
+        <button class="filter-pill"        onclick="setFilter('done',   this)">Fait ✓</button>
+      </div>
+
+      <ul class="todo-list" id="todoList"></ul>
+
+      <div class="stats-row">
+        <span id="statsText">0 tâche</span>
+        <span id="statsPercent">0%</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- ===== QUOTE ===== -->
+    <div class="quote-card">
+      <button class="quote-refresh" onclick="newQuote()" title="Nouvelle citation">↻</button>
+      <div class="quote-text"   id="quoteText"></div>
+      <div class="quote-author" id="quoteAuthor"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ===========================
+   PETALS
+=========================== */
+const colors = ['#f9a8d4','#f0abfc','#fcd34d','#86efac','#a5f3fc'];
+for (let i = 0; i < 18; i++) {
+  const p = document.createElement('div');
+  p.className = 'petal';
+  p.style.cssText = `
+    left:${Math.random()*100}%;
+    background:${colors[Math.floor(Math.random()*colors.length)]};
+    animation-duration:${6+Math.random()*10}s;
+    animation-delay:${-Math.random()*12}s;
+    width:${8+Math.random()*12}px;
+    height:${8+Math.random()*12}px;
+    opacity:${.4+Math.random()*.5};
+  `;
+  document.body.appendChild(p);
+}
+
+/* ===========================
+   TOAST
+=========================== */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ===========================
+   POMODORO TIMER
+=========================== */
+const MODES = {
+  pomodoro: { duration: 25*60, label: 'Focus 💪' },
+  short:    { duration:  5*60, label: 'Pause 🌸' },
+  long:     { duration: 15*60, label: 'Détente 🧘' },
+};
+
+let currentMode = 'pomodoro';
+let totalSecs   = MODES.pomodoro.duration;
+let remaining   = totalSecs;
+let running     = false;
+let interval    = null;
+let sessions    = 0;
+
+const CIRCUMFERENCE = 2 * Math.PI * 78; // 489.8
+
+function setMode(mode) {
+  currentMode = mode;
+  totalSecs   = MODES[mode].duration;
+  remaining   = totalSecs;
+  running     = false;
+  clearInterval(interval);
+  document.getElementById('playBtn').textContent = '▶';
+  document.querySelectorAll('.mode-btn').forEach((b,i)=>
+    b.classList.toggle('active', ['pomodoro','short','long'][i]===mode));
+  document.getElementById('timerLabel').textContent = MODES[mode].label;
+  updateDisplay();
+}
+
+function toggleTimer() {
+  running = !running;
+  document.getElementById('playBtn').textContent = running ? '⏸' : '▶';
+  if (running) {
+    interval = setInterval(tick, 1000);
+  } else {
+    clearInterval(interval);
+  }
+}
+
+function tick() {
+  if (remaining <= 0) {
+    clearInterval(interval);
+    running = false;
+    document.getElementById('playBtn').textContent = '▶';
+    onSessionEnd();
+    return;
+  }
+  remaining--;
+  updateDisplay();
+}
+
+function resetTimer() {
+  clearInterval(interval);
+  running = false;
+  remaining = totalSecs;
+  document.getElementById('playBtn').textContent = '▶';
+  updateDisplay();
+}
+
+function skipSession() {
+  clearInterval(interval);
+  running = false;
+  remaining = 0;
+  onSessionEnd();
+}
+
+function onSessionEnd() {
+  if (currentMode === 'pomodoro') {
+    sessions++;
+    updateSessionDots();
+    showToast('🎉 Super session ! Prends une pause méritée 🌸');
+    if (sessions % 4 === 0) {
+      setMode('long');
+      showToast('✨ 4 sessions ! Grande pause bien méritée 💆');
+    } else {
+      setMode('short');
+    }
+  } else {
+    setMode('pomodoro');
+    showToast('💪 Pause terminée ! On reprend avec énergie !');
+  }
+}
+
+function updateDisplay() {
+  const m = String(Math.floor(remaining/60)).padStart(2,'0');
+  const s = String(remaining%60).padStart(2,'0');
+  document.getElementById('timerDisplay').textContent = `${m}:${s}`;
+  const pct = remaining / totalSecs;
+  const offset = CIRCUMFERENCE * pct;
+  document.getElementById('ringProgress').style.strokeDashoffset = CIRCUMFERENCE - offset;
+}
+
+function updateSessionDots() {
+  const el = document.getElementById('sessions');
+  el.innerHTML = '';
+  for (let i = 0; i < 4; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i < sessions % 4 || (sessions%4===0 && sessions>0 && i<4) ? ' done' : '');
+    // simpler:
+    d.className = 'dot' + (i < (sessions % 4 === 0 && sessions > 0 ? 4 : sessions % 4) ? ' done':'');
+    el.appendChild(d);
+  }
+}
+
+updateDisplay();
+updateSessionDots();
+
+/* ===========================
+   TO-DO LIST
+=========================== */
+let todos  = [];
+let filter = 'all';
+let prio   = 'high';
+
+function selectPrio(btn) {
+  document.querySelectorAll('.prio-opt').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  prio = btn.dataset.p;
+}
+
+function addTodo() {
+  const input = document.getElementById('todoInput');
+  const text  = input.value.trim();
+  if (!text) return;
+  todos.unshift({ id: Date.now(), text, done: false, prio });
+  input.value = '';
+  renderTodos();
+  showToast('✅ Tâche ajoutée !');
+}
+
+function toggleTodo(id) {
+  const t = todos.find(t=>t.id===id);
+  if (t) t.done = !t.done;
+  if (t.done) showToast('🌸 Tâche accomplie, bravo !');
+  renderTodos();
+}
+
+function deleteTodo(id) {
+  todos = todos.filter(t=>t.id!==id);
+  renderTodos();
+}
+
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTodos();
+}
+
+const prioLabel = { high:'Urgent', medium:'Normal', low:'Doux' };
+const prioClass = { high:'p-high', medium:'p-medium', low:'p-low' };
+
+function renderTodos() {
+  const list = document.getElementById('todoList');
+  let visible = todos;
+  if (filter === 'active') visible = todos.filter(t=>!t.done);
+  if (filter === 'done')   visible = todos.filter(t=> t.done);
+
+  if (visible.length === 0) {
+    list.innerHTML = `<li style="text-align:center;color:var(--text-soft);font-size:.9rem;padding:20px 0">
+      ${filter==='done' ? '🌸 Rien d\'accompli pour l\'instant' : '✨ Aucune tâche — profites-en !'}
+    </li>`;
+  } else {
+    list.innerHTML = visible.map(t => `
+      <li class="todo-item ${t.done?'done-item':''}">
+        <div class="check-box ${t.done?'checked':''}" onclick="toggleTodo(${t.id})"></div>
+        <span class="todo-text">${escHtml(t.text)}</span>
+        <span class="priority-badge ${prioClass[t.prio]}">${prioLabel[t.prio]}</span>
+        <button class="delete-btn" onclick="deleteTodo(${t.id})">🗑</button>
+      </li>
+    `).join('');
+  }
+  updateStats();
+}
+
+function updateStats() {
+  const total = todos.length;
+  const done  = todos.filter(t=>t.done).length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+  document.getElementById('statsText').textContent =
+    `${done}/${total} tâche${total>1?'s':''}`;
+  document.getElementById('statsPercent').textContent = `${pct}%`;
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+renderTodos();
+
+/* ===========================
+   QUOTES
+=========================== */
+const quotes = [
+  { text: "Elle croyait qu'elle le pouvait, alors elle le fit.", author: "R.S. Grey" },
+  { text: "Sois toi-même ; tous les autres sont déjà pris.", author: "Oscar Wilde" },
+  { text: "La vie est trop courte pour porter des tenues ennuyeuses.", author: "Coco Chanel" },
+  { text: "Elle n'avait pas besoin qu'on la sauve. Elle avait besoin d'elle-même.", author: "Atticus" },
+  { text: "Une femme qui sait ce qu'elle veut est invincible.", author: "Diane von Furstenberg" },
+  { text: "Fais-le avec passion ou ne le fais pas du tout.", author: "Rosa Nouchette Carey" },
+  { text: "Le secret de démarrer, c'est de commencer.", author: "Mark Twain" },
+  { text: "Elle transforme ses cicatrices en étoiles.", author: "Inconnu" },
+  { text: "La beauté commence au moment où tu décides d'être toi-même.", author: "Coco Chanel" },
+  { text: "Prends soin de ton futur toi — elle te remerciera.", author: "Inconnu" },
+  { text: "Le succès est la somme de petits efforts répétés jour après jour.", author: "Robert Collier" },
+  { text: "Tu es plus forte que tu ne le crois, et plus brillante que tu ne l'imagines.", author: "Inconnu" },
+];
+
+let lastQuote = -1;
+function newQuote() {
+  let idx;
+  do { idx = Math.floor(Math.random() * quotes.length); } while (idx === lastQuote);
+  lastQuote = idx;
+  document.getElementById('quoteText').textContent   = quotes[idx].text;
+  document.getElementById('quoteAuthor').textContent = '— ' + quotes[idx].author;
+}
+newQuote();
+</script>
+</body>
+</html>
